@@ -1,10 +1,10 @@
 /* some style */
 h1 {
-    font-size: 16pt;
+    font-size: 14pt;
     text-align: center;
 }
-th {
-    font-size: 14pt;
+th, td {
+    font-size: 12pt;
 }
 td:first-child {
     width: 90%;
@@ -12,7 +12,12 @@ td:first-child {
 th:last-child, td:last-child {
     text-align: right;
 }
-table {
+input {
+    margin-top: 2em;
+}
+.stop h1 {
+    margin-top: 2em;
+    font-size: 14pt;
 }
 .stop h2 {
     font-size: 14pt;
@@ -22,6 +27,12 @@ table {
 .stop p {
     font-size: 12pt;
     font-weight: bold;
+}
+h1,h2,h3,th {
+    font-family: Georgia;
+}
+table h2 {
+    font-family: Helvetica;
 }
 body {
    /* background-color: #eaab00;*/

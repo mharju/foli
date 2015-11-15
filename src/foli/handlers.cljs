@@ -65,5 +65,5 @@
     (fn [app-state [_ stop-name]]
       (when-not (nil? ((app-state :stop-ids) stop-name))
           (dispatch [:set-selected-stop stop-name]))
-      app-state))
+      (assoc app-state :search-value stop-name)))
 

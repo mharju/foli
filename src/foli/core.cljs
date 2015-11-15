@@ -29,6 +29,10 @@
     (fn [db _]
       (reaction (get-in @db [:selected-stop]))))
 
+(register-sub :search-value
+    (fn [db _]
+      (reaction (get-in @db [:search-value]))))
+
 (defn schedule [data]
   (let [fmt (f/formatter "HH:mm")]
       [:tr
@@ -39,7 +43,7 @@
   (let [stop (subscribe [:stops stop-id])
         stop-ids (subscribe [:stop-ids])]
     [:div {:className "stop"}
-          [:h1 (str "Pysäkki " stop-id ", " (@stop-ids stop-id))]
+          [:h1 (str stop-id " – " (@stop-ids stop-id))]
           [:table.table
             [:thead
               [:tr
@@ -49,11 +53,13 @@
               (map-indexed (fn [index s] ^{:key index} [schedule s]) @stop)]]]))
 
 (defn application []
-  (let [selected-stop (subscribe [:selected-stop])]
+  (let [selected-stop (subscribe [:selected-stop])
+        search-value (subscribe [:search-value])]
     (fn []
       [:div.container
-          [:input.form-control {:placeholder "Syötä pysäkin nimi tai numero"
-                               :onChange #(dispatch [:search-stop (.-value (.-target %))])}]
+          [:input.form-control {:placeholder "Syötä pysäkin numero"
+                                :value @search-value
+                                :onChange #(dispatch [:search-stop (.-value (.-target %))])}]
           (when-not (nil? @selected-stop)
               [stop-schedule @selected-stop])])))
 
@@ -61,17 +67,7 @@
   [application]
   (.getElementById js/document "app"))
 
-(defroute stop-route "/stops/:stop-id" [stop-id]
-    (dispatch [:set-selected-stop stop-id]))
-
-(defroute default-route "*" []
-    (dispatch [:main]))
-
 (defn main []
-    (secretary/set-config! :prefix  "#")
-    (let [h  (History.)]
-        (goog.events/listen h EventType/NAVIGATE #(secretary/dispatch!  (.-token %)))
-        (doto h (.setEnabled true)))
     (dispatch [:fetch-stops]))
 (main)
 
