@@ -42,16 +42,15 @@
 (defn stop-schedule [stop-id]
   (let [stop (subscribe [:stops stop-id])
         stop-ids (subscribe [:stop-ids])]
-    (fn [stop-id]
-        [:div {:className "stop"}
-              [:h1 (str stop-id " – " (@stop-ids stop-id))]
-              [:table.table
-                [:thead
-                  [:tr
-                    [:th "Kohde"]
-                    [:th "Lähtö"]]]
-                [:tbody
-                  (map-indexed (fn [index s] ^{:key index} [schedule s]) @stop)]]])))
+    [:div {:className "stop"}
+          [:h1 (str stop-id " – " (@stop-ids stop-id))]
+          [:table.table
+            [:thead
+              [:tr
+                [:th "Kohde"]
+                [:th "Lähtö"]]]
+            [:tbody
+              (map-indexed (fn [index s] ^{:key index} [schedule s]) @stop)]]]))
 
 (declare stop-route)
 (defn search-results []

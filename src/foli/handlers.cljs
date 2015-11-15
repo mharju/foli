@@ -79,7 +79,7 @@
           (assoc :name-search-results
                  (when (< 3 (count stop-name)) (keep
                    (fn [[k v]]
-                     (when (.startsWith (lower-case v) (lower-case stop-name))
+                     (when (= (subs (lower-case v) 0 (count stop-name)) (lower-case stop-name))
                        {:name v :id k}))
                       (:stop-ids app-state)))))))
 
