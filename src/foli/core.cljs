@@ -1,47 +1,33 @@
 (ns foli.core
   (:require [reagent.core :as re]
-            [re-frame.core :refer [subscribe register-sub register-handler dispatch]]
-            [ajax.core :as a]
-            [clojure.string :refer [join]]
+            [re-frame.core :refer [debug subscribe register-sub register-handler dispatch]]
             [secretary.core :as secretary :refer-macros  [defroute]]
             [goog.events :as events]
             [goog.history.EventType :as EventType]
             [cljs-time.core :as t]
             [cljs-time.coerce :as c]
-            [cljs-time.format :as f])
+            [cljs-time.format :as f]
+            [foli.handlers])
   (:require-macros [reagent.ratom :refer [reaction]])
   (:import goog.History))
 
 (enable-console-print!)
 
-;; define your app data so that it doesn't get over-written on reload
+(register-sub :stop-names
+    (fn [db _]
+      (reaction (:stop-names @db))))
 
-(def foli-url "http://data.foli.fi/")
-
-(register-handler :fetch-stop-data
-    (fn [app-state [_ stop-id]]
-      (let [result (a/GET (join "/" [ foli-url "siri/sm" stop-id]) {
-                          :handler
-                          (fn [result]
-                            (dispatch [:set-stop-data stop-id result]))
-                          :response-format :json})]
-        app-state)))
-
-(defn format-response [response]
-  (map (fn [item]
-     (let [estimated-time (t/to-default-time-zone (c/from-long (* 1000 (item "expectedarrivaltime"))))]
-         {:display (item "destinationdisplay")
-          :estimated-time estimated-time})) (response "result")))
-
-
-(register-handler :set-stop-data
-    (fn [app-state [_ stop-id data]]
-      (assoc-in app-state [:stops stop-id]
-            (format-response data))))
+(register-sub :stop-ids
+    (fn [db _]
+      (reaction (:stop-ids @db))))
 
 (register-sub :stops
     (fn [db [_ stop-id]]
       (reaction (get-in @db [:stops stop-id]))))
+
+(register-sub :selected-stop
+    (fn [db _]
+      (reaction (get-in @db [:selected-stop]))))
 
 (defn schedule [data]
   (let [fmt (f/formatter "HH:mm")]
@@ -50,9 +36,10 @@
         [:td [:p (f/unparse fmt (:estimated-time data))]]]))
 
 (defn stop-schedule [stop-id]
-  (let [stop (subscribe [:stops stop-id])]
+  (let [stop (subscribe [:stops stop-id])
+        stop-ids (subscribe [:stop-ids])]
       [:div {:className "stop"}
-          [:h1 (str "Pysäkki " stop-id)]
+          [:h1 (str "Pysäkki " stop-id ", " (@stop-ids stop-id))]
           [:table.table
             [:thead
               [:tr
@@ -61,34 +48,31 @@
             [:tbody
               (map-indexed (fn [index s] ^{:key index} [schedule s]) @stop)]]]))
 
-(declare stop-route)
-(register-handler :search-stop
-    (fn [app-state [_ stop-name]]
-      (secretary/dispatch! (stop-route {:stop-id stop-name}))
-      app-state))
-
-(defroute stop-route "/stops/:stop-id" [stop-id]
-    (dispatch [:fetch-stop-data stop-id])
-    (re/render-component
+(defn application []
+  (let [selected-stop (subscribe [:selected-stop])]
+    (fn []
       [:div.container
           [:input.form-control {:placeholder "Syötä pysäkin nimi tai numero"
                                :onChange #(dispatch [:search-stop (.-value (.-target %))])}]
-          [stop-schedule stop-id]]
-      (.getElementById js/document "app")))
+          (when-not (nil? @selected-stop)
+              [stop-schedule @selected-stop])])))
+
+(re/render-component
+  [application]
+  (.getElementById js/document "app"))
+
+(defroute stop-route "/stops/:stop-id" [stop-id]
+    (dispatch [:set-selected-stop stop-id]))
 
 (defroute default-route "*" []
-    (re/render-component
-      [:div.container
-          [:input.form-control {:placeholder "Syötä pysäkin nimi tai numero"
-                               :onChange #(dispatch [:search-stop (.-value (.-target %))])}]]
-      (.getElementById js/document "app")))
+    (dispatch [:main]))
 
 (defn main []
     (secretary/set-config! :prefix  "#")
     (let [h  (History.)]
         (goog.events/listen h EventType/NAVIGATE #(secretary/dispatch!  (.-token %)))
         (doto h (.setEnabled true)))
-    )
+    (dispatch [:fetch-stops]))
 (main)
 
 (defn on-js-reload []
