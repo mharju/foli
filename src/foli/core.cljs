@@ -13,10 +13,6 @@
 
 (enable-console-print!)
 
-(register-sub :stop-names
-    (fn [db _]
-      (reaction (:stop-names @db))))
-
 (register-sub :stop-ids
     (fn [db _]
       (reaction (:stop-ids @db))))
@@ -33,6 +29,10 @@
     (fn [db _]
       (reaction (get-in @db [:search-value]))))
 
+(register-sub :name-search-results
+    (fn [db _]
+      (reaction (get-in @db [:name-search-results]))))
+
 (defn schedule [data]
   (let [fmt (f/formatter "HH:mm")]
       [:tr
@@ -42,32 +42,52 @@
 (defn stop-schedule [stop-id]
   (let [stop (subscribe [:stops stop-id])
         stop-ids (subscribe [:stop-ids])]
-    [:div {:className "stop"}
-          [:h1 (str stop-id " – " (@stop-ids stop-id))]
-          [:table.table
-            [:thead
-              [:tr
-                [:th "Kohde"]
-                [:th "Lähtö"]]]
-            [:tbody
-              (map-indexed (fn [index s] ^{:key index} [schedule s]) @stop)]]]))
+    (fn [stop-id]
+        [:div {:className "stop"}
+              [:h1 (str stop-id " – " (@stop-ids stop-id))]
+              [:table.table
+                [:thead
+                  [:tr
+                    [:th "Kohde"]
+                    [:th "Lähtö"]]]
+                [:tbody
+                  (map-indexed (fn [index s] ^{:key index} [schedule s]) @stop)]]])))
+
+(declare stop-route)
+(defn search-results []
+  (let [search-results (subscribe [:name-search-results])]
+      (fn []
+        [:div.results
+            (map-indexed (fn [index {:keys [name id]}] ^{:key index} [:a {:href (stop-route {:stop-id id})} (str name " " id)]) @search-results)])))
 
 (defn application []
   (let [selected-stop (subscribe [:selected-stop])
-        search-value (subscribe [:search-value])]
+        search-value (subscribe [:search-value])
+        name-search-results (subscribe [:name-search-results])]
     (fn []
       [:div.container
-          [:input.form-control {:placeholder "Syötä pysäkin numero"
+          [:input.form-control {:placeholder "Syötä pysäkin osoite tai numero"
                                 :value @search-value
                                 :onChange #(dispatch [:search-stop (.-value (.-target %))])}]
           (when-not (nil? @selected-stop)
-              [stop-schedule @selected-stop])])))
+              [stop-schedule @selected-stop])
+          (when-not (nil? @name-search-results)
+               [search-results])])))
 
 (re/render-component
   [application]
   (.getElementById js/document "app"))
 
+(defroute stop-route "/stops/:stop-id" [stop-id]
+    (dispatch [:set-selected-stop stop-id]))
+(defroute default "*" []
+    (dispatch [:main]))
+
 (defn main []
+    (secretary/set-config! :prefix  "#")
+    (let [h  (History.)]
+        (goog.events/listen h EventType/NAVIGATE #(secretary/dispatch!  (.-token %)))
+        (doto h (.setEnabled true)))
     (dispatch [:fetch-stops]))
 (main)
 

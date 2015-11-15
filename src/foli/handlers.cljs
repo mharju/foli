@@ -1,7 +1,7 @@
 (ns foli.handlers
   (:require
     [ajax.core :as a]
-    [clojure.string :refer [join]]
+    [clojure.string :refer [join lower-case]]
     [cljs-time.core :as t]
     [cljs-time.coerce :as c]
     [cljs-time.format :as f]
@@ -36,8 +36,8 @@
 
 (register-handler :fetch-stops
     (fn [app-state _]
-      (when (or (nil? (:stop-names app-state))
-                (stale? (:fetch-time (meta (:stop-names app-state)))))
+      (when (or (nil? (:stop-ids app-state))
+                (stale? (:fetch-time (meta (:stop-ids app-state)))))
           (a/GET (join "/" [foli-url "siri/sm"]) {
                 :handler
                 (fn [result]
@@ -48,14 +48,18 @@
 (register-handler :set-stops
     (fn [app-state [_ result]]
         (let [new-state  (-> app-state
-            (assoc :stop-names (into (with-meta {} {:fetch-time (t/now)}) (keep (fn [[k v]] [(v "stop_name") k])) result))
-            (assoc :stop-ids (into (with-meta {:fetch-time (t/now)} {}) (keep (fn [[k v]] [k (v "stop_name")])) result)))]
+            (assoc :stop-ids
+                   (into (with-meta {} {:fetch-time (t/now)})
+                         (keep (fn [[k v]]
+                                 (when-not (nil? (v "stop_name")) [k (v "stop_name")]))) result)))]
           new-state)))
 
 (register-handler :set-selected-stop
     (fn [app-state [_ stop-id]]
       (dispatch [:fetch-stop-data stop-id])
-      (assoc app-state :selected-stop stop-id)))
+      (-> app-state
+          (dissoc :name-search-results)
+          (assoc :selected-stop stop-id))))
 
 (register-handler :main
     (fn [app-state [_ stop-id]]
@@ -63,7 +67,19 @@
 
 (register-handler :search-stop
     (fn [app-state [_ stop-name]]
-      (when-not (nil? ((app-state :stop-ids) stop-name))
-          (dispatch [:set-selected-stop stop-name]))
+      (if-not (nil? ((app-state :stop-ids) stop-name))
+          (dispatch [:set-selected-stop stop-name])
+          (dispatch [:search-stop-with-name stop-name]))
       (assoc app-state :search-value stop-name)))
+
+(register-handler :search-stop-with-name
+    (fn [app-state [_ stop-name]]
+      (-> app-state
+          (dissoc :selected-stop)
+          (assoc :name-search-results
+                 (when (< 3 (count stop-name)) (keep
+                   (fn [[k v]]
+                     (when (.startsWith (lower-case v) (lower-case stop-name))
+                       {:name v :id k}))
+                      (:stop-ids app-state)))))))
 
