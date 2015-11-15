@@ -1,0 +1,29 @@
+/* some style */
+h1 {
+    font-size: 16pt;
+    text-align: center;
+}
+th {
+    font-size: 14pt;
+}
+td:first-child {
+    width: 90%;
+}
+th:last-child, td:last-child {
+    text-align: right;
+}
+table {
+}
+.stop h2 {
+    font-size: 14pt;
+    font-weight: normal;
+    margin: 0;
+}
+.stop p {
+    font-size: 12pt;
+    font-weight: bold;
+}
+body {
+   /* background-color: #eaab00;*/
+    margin-top: 2em;
+}
