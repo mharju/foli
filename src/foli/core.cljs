@@ -38,7 +38,7 @@
 (defn stop-schedule [stop-id]
   (let [stop (subscribe [:stops stop-id])
         stop-ids (subscribe [:stop-ids])]
-      [:div {:className "stop"}
+    [:div {:className "stop"}
           [:h1 (str "Pysäkki " stop-id ", " (@stop-ids stop-id))]
           [:table.table
             [:thead
