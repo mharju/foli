@@ -14,6 +14,7 @@
   (map (fn [item]
      (let [estimated-time (t/to-default-time-zone (c/from-long (* 1000 (item "expectedarrivaltime"))))]
          {:display (item "destinationdisplay")
+          :line (item "lineref")
           :estimated-time estimated-time})) (response "result")))
 
 (defn stale? [stamp] (or (nil? stamp) (t/before? (t/plus (t/now) cache-timeout) stamp)))

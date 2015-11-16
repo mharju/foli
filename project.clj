@@ -11,7 +11,8 @@
                  [reagent "0.5.1"]
                  [re-frame "0.5.0"]
                  [com.andrewmcveigh/cljs-time "0.3.14"]
-                 [secretary "1.2.3"]]
+                 [secretary "1.2.3"]
+                 [gmapscljs "0.0.2"]]
 
   :plugins [[lein-cljsbuild "1.1.1"]
             [lein-figwheel "0.4.1"]]

@@ -7,6 +7,7 @@
             [cljs-time.core :as t]
             [cljs-time.coerce :as c]
             [cljs-time.format :as f]
+            [gmapscljs.core :as gm]
             [foli.handlers])
   (:require-macros [reagent.ratom :refer [reaction]])
   (:import goog.History))
@@ -36,17 +37,21 @@
 (defn schedule [data]
   (let [fmt (f/formatter "HH:mm")]
       [:tr
+        [:td [:h2 (:line data)]]
         [:td [:h2 (:display data)]]
         [:td [:p (f/unparse fmt (:estimated-time data))]]]))
 
 (defn stop-schedule [stop-id]
   (let [stop (subscribe [:stops stop-id])
         stop-ids (subscribe [:stop-ids])]
-    [:div {:className "stop"}
+    [:div {:className "stop"
+            :style {:height (str (- (.-clientHeight  (.-documentElement js/document)) 150) "px")}}
+
           [:h1 (str stop-id " – " (@stop-ids stop-id))]
           [:table.table
             [:thead
               [:tr
+                [:th "Linja"]
                 [:th "Kohde"]
                 [:th "Lähtö"]]]
             [:tbody
@@ -65,17 +70,16 @@
         name-search-results (subscribe [:name-search-results])]
     (fn []
       [:div.container
-          [:input.form-control {:placeholder "Syötä pysäkin osoite tai numero"
-                                :value @search-value
-                                :onChange #(dispatch [:search-stop (.-value (.-target %))])}]
+          [gm/google-maps {:id "map" :center (google.maps.LatLng. 60.457851 22.3186) :zoom 15}]
+          [:div.input-container
+              [:input.form-control.input-lg {:placeholder "Syötä pysäkin osoite tai numero"
+                                    :value @search-value
+                                    :onChange #(dispatch [:search-stop (.-value (.-target %))])}]]
           (when-not (nil? @selected-stop)
               [stop-schedule @selected-stop])
           (when-not (nil? @name-search-results)
                [search-results])])))
 
-(re/render-component
-  [application]
-  (.getElementById js/document "app"))
 
 (defroute stop-route "/stops/:stop-id" [stop-id]
     (dispatch [:set-selected-stop stop-id]))
@@ -87,7 +91,11 @@
     (let [h  (History.)]
         (goog.events/listen h EventType/NAVIGATE #(secretary/dispatch!  (.-token %)))
         (doto h (.setEnabled true)))
-    (dispatch [:fetch-stops]))
+    (dispatch [:fetch-stops]
+    (re/render-component
+      [application]
+      (.getElementById js/document "app"))))
+
 (main)
 
 (defn on-js-reload []
