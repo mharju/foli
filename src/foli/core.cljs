@@ -14,24 +14,33 @@
 (enable-console-print!)
 
 (register-sub :stop-ids
-    (fn [db _]
-      (reaction (:stop-ids @db))))
+  (fn [db _]
+    (reaction (:stop-ids @db))))
 
 (register-sub :stops
-    (fn [db [_ stop-id]]
-      (reaction (get-in @db [:stops stop-id]))))
+  (fn [db [_ stop-id]]
+    (reaction (get-in @db [:stops stop-id]))))
 
 (register-sub :selected-stop
-    (fn [db _]
-      (reaction (get-in @db [:selected-stop]))))
+  (fn [db _]
+    (reaction (get-in @db [:selected-stop]))))
 
 (register-sub :search-value
-    (fn [db _]
-      (reaction (get-in @db [:search-value]))))
+  (fn [db _]
+    (reaction (get-in @db [:search-value]))))
 
 (register-sub :name-search-results
-    (fn [db _]
-      (reaction (get-in @db [:name-search-results]))))
+  (fn [db _]
+    (reaction (get-in @db [:name-search-results]))))
+
+(register-sub :selected-stop-schedule
+  (fn [db _]
+    (let [stop-id (reaction (get @db :selected-stop))
+          schedule (reaction (get-in @db [:stops @stop-id]))
+          stop-ids (reaction (get @db :stop-ids))]
+      (reaction {:schedule @schedule
+         :stop-id @stop-id
+         :stop-name (get @stop-ids @stop-id)}))))
 
 (defn schedule [data]
   (let [fmt (f/formatter "HH:mm")]
@@ -40,13 +49,13 @@
         [:td [:p (:display data)]]
         [:td [:p (f/unparse fmt (:estimated-time data))]]]))
 
-(defn stop-schedule [stop-id]
-  (let [stop (subscribe [:stops stop-id])
-        stop-ids (subscribe [:stop-ids])]
+(defn stop-schedule []
+  (let [sched (subscribe [:selected-stop-schedule])]
     [:div {:className "stop"
-            :style {:height (str (- (.-clientHeight  (.-documentElement js/document)) 150) "px")}}
-
-          [:h4 {:style {:textAlign "center"}} (str stop-id " – " (@stop-ids stop-id))]
+          :style {:height (str (- (.-clientHeight  (.-documentElement js/document)) 150) "px")}}
+      (when-not (nil? (get @sched :stop-id))
+        [:div
+          [:h4 {:style {:textAlign "center"}} (str (get @sched :stop-id) " - " (get @sched :stop-name))]
           [:table.table
             [:thead
               [:tr
@@ -54,7 +63,7 @@
                 [:th "Kohde"]
                 [:th "Lähtö"]]]
             [:tbody
-              (map-indexed (fn [index s] ^{:key index} [schedule s]) @stop)]]]))
+              (map-indexed (fn [index s] ^{:key index} [schedule s]) (get @sched :schedule))]]])]))
 
 (declare stop-route)
 (defn search-results []
@@ -64,20 +73,19 @@
             (map-indexed (fn [index {:keys [name id]}] ^{:key index} [:a {:href (stop-route {:stop-id id})} (str name " " id)]) @search-results)])))
 
 (defn application []
-  (let [selected-stop (subscribe [:selected-stop])
-        search-value (subscribe [:search-value])
+  (let [search-value (subscribe [:search-value])
         name-search-results (subscribe [:name-search-results])]
     (fn []
       [:div.container
           [:div.row.input-container
             [:div.column
+              [:span.fa.fa-search]
               [:input.form-control.input-lg {
                                     :type "text"
                                     :placeholder "Syötä pysäkin osoite tai numero"
                                     :value @search-value
                                     :onChange #(dispatch [:search-stop (.-value (.-target %))])}]]]
-          (when-not (nil? @selected-stop)
-              [stop-schedule @selected-stop])
+          [stop-schedule]
           (when-not (nil? @name-search-results)
                [search-results])])))
 
