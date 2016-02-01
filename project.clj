@@ -5,17 +5,16 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.7.122"]
+                 [org.clojure/clojurescript "1.7.170"]
                  [org.clojure/core.async "0.2.374"]
-                 [cljs-ajax "0.5.1"]
-                 [reagent "0.5.1"]
-                 [re-frame "0.5.0"]
+                 [cljs-ajax "0.5.3"]
+                 [reagent "0.6.0-alpha"]
+                 [re-frame "0.7.0-alpha"]
                  [com.andrewmcveigh/cljs-time "0.3.14"]
-                 [secretary "1.2.3"]
-                 [gmapscljs "0.0.2"]]
+                 [secretary "1.2.3"]]
 
-  :plugins [[lein-cljsbuild "1.1.1"]
-            [lein-figwheel "0.4.1"]]
+  :plugins [[lein-cljsbuild "1.1.2"]
+            [lein-figwheel "0.5.0-6"]]
 
   :source-paths ["src"]
 

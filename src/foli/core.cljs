@@ -7,7 +7,6 @@
             [cljs-time.core :as t]
             [cljs-time.coerce :as c]
             [cljs-time.format :as f]
-            [gmapscljs.core :as gm]
             [foli.handlers])
   (:require-macros [reagent.ratom :refer [reaction]])
   (:import goog.History))
@@ -37,8 +36,8 @@
 (defn schedule [data]
   (let [fmt (f/formatter "HH:mm")]
       [:tr
-        [:td [:h2 (:line data)]]
-        [:td [:h2 (:display data)]]
+        [:td [:p (:line data)]]
+        [:td [:p (:display data)]]
         [:td [:p (f/unparse fmt (:estimated-time data))]]]))
 
 (defn stop-schedule [stop-id]
@@ -47,7 +46,7 @@
     [:div {:className "stop"
             :style {:height (str (- (.-clientHeight  (.-documentElement js/document)) 150) "px")}}
 
-          [:h1 (str stop-id " – " (@stop-ids stop-id))]
+          [:h4 {:style {:textAlign "center"}} (str stop-id " – " (@stop-ids stop-id))]
           [:table.table
             [:thead
               [:tr
@@ -70,11 +69,13 @@
         name-search-results (subscribe [:name-search-results])]
     (fn []
       [:div.container
-          [gm/google-maps {:id "map" :center (google.maps.LatLng. 60.457851 22.3186) :zoom 15}]
-          [:div.input-container
-              [:input.form-control.input-lg {:placeholder "Syötä pysäkin osoite tai numero"
+          [:div.row.input-container
+            [:div.column
+              [:input.form-control.input-lg {
+                                    :type "text"
+                                    :placeholder "Syötä pysäkin osoite tai numero"
                                     :value @search-value
-                                    :onChange #(dispatch [:search-stop (.-value (.-target %))])}]]
+                                    :onChange #(dispatch [:search-stop (.-value (.-target %))])}]]]
           (when-not (nil? @selected-stop)
               [stop-schedule @selected-stop])
           (when-not (nil? @name-search-results)
@@ -86,7 +87,8 @@
 (defroute default "*" []
     (dispatch [:main]))
 
-(defn main []
+(defonce init
+  (do
     (secretary/set-config! :prefix  "#")
     (let [h  (History.)]
         (goog.events/listen h EventType/NAVIGATE #(secretary/dispatch!  (.-token %)))
@@ -94,9 +96,7 @@
     (dispatch [:fetch-stops]
     (re/render-component
       [application]
-      (.getElementById js/document "app"))))
-
-(main)
+      (.getElementById js/document "app")))))
 
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on
