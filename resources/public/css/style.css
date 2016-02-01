@@ -5,3 +5,22 @@ span.fa-search {
     position: relative;
     top: 1.7em;
 }
+
+#results {
+    position: absolute;
+    top: 60px;
+}
+
+#results a {
+    display: block;
+    padding: 1em 0.8em;
+}
+
+#intro {
+    text-align: center;
+    margin-top: 2em;
+}
+#intro .fa-bus {
+    color: #9b4dca;
+    font-size: 32pt;
+}

@@ -69,11 +69,20 @@
 (defn search-results []
   (let [search-results (subscribe [:name-search-results])]
       (fn []
-        [:div.results
-            (map-indexed (fn [index {:keys [name id]}] ^{:key index} [:a {:href (stop-route {:stop-id id})} (str name " " id)]) @search-results)])))
+        [:div#results.row
+          [:div.column
+            (map-indexed (fn [index {:keys [name id]}] ^{:key index} [:a {:href (stop-route {:stop-id id})} (str id " " name)]) @search-results)]])))
+
+(defn intro []
+  [:div#intro.row
+    [:div.column
+      [:span.fa.fa-bus]
+      [:h1 "Bussiaikataului niit tarttevil"]
+      [:p "Pist toho yläpualel vähä vinkkii ni mää kerron sit kaikke mitä mää ikinä sit vaa keksinki."]]])
 
 (defn application []
   (let [search-value (subscribe [:search-value])
+        selected-stop (subscribe [:selected-stop])
         name-search-results (subscribe [:name-search-results])]
     (fn []
       [:div.container
@@ -85,7 +94,9 @@
                                     :placeholder "Syötä pysäkin osoite tai numero"
                                     :value @search-value
                                     :onChange #(dispatch [:search-stop (.-value (.-target %))])}]]]
-          [stop-schedule]
+          (when (and (empty? @name-search-results) (empty? @selected-stop))
+            [intro])
+          (when-not (empty? @selected-stop) [stop-schedule])
           (when-not (nil? @name-search-results)
                [search-results])])))
 
