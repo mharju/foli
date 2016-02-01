@@ -80,7 +80,7 @@
           [:div.row.input-container
             [:div.column
               [:span.fa.fa-search]
-              [:input.form-control.input-lg {
+              [:input#search.form-control.input-lg {
                                     :type "text"
                                     :placeholder "Syötä pysäkin osoite tai numero"
                                     :value @search-value
@@ -101,10 +101,13 @@
     (let [h  (History.)]
         (goog.events/listen h EventType/NAVIGATE #(secretary/dispatch!  (.-token %)))
         (doto h (.setEnabled true)))
-    (dispatch [:fetch-stops]
+    (dispatch [:fetch-stops])
     (re/render-component
       [application]
-      (.getElementById js/document "app")))))
+      (.getElementById js/document "app"))
+    (js/setTimeout (fn []
+        (.focus (.getElementById js/document "search")))
+      500)))
 
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on
