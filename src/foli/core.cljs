@@ -71,7 +71,7 @@
       (fn []
         [:div#results.row
           [:div.column
-            (map-indexed (fn [index {:keys [name id]}] ^{:key index} [:a {:href (stop-route {:stop-id id})} (str id " " name)]) @search-results)]])))
+            (map-indexed (fn [index {:keys [name id]}] ^{:key index} [:a {:href (stop-route {:stop-id id})} [:span.id id] [:span.name name]]) @search-results)]])))
 
 (defn intro []
   (let [message (first (shuffle ["Minknumeroisi bussei täst oikke kulke?" "Meneek toi kauppatoril?" "Täsä sul bussitiatoo" "Niimpal kauhiast aikataului" "No misä se ny oikke viippy?"]))]
