@@ -74,11 +74,12 @@
             (map-indexed (fn [index {:keys [name id]}] ^{:key index} [:a {:href (stop-route {:stop-id id})} (str id " " name)]) @search-results)]])))
 
 (defn intro []
+  (let [message (first (shuffle ["Minknumeroisi bussei täst oikke kulke?" "Meneek toi kauppatoril?" "Täsä sul bussitiatoo" "Niimpal kauhiast aikataului" "No misä se ny oikke viippy?"]))]
   [:div#intro.row
     [:div.column
       [:span.fa.fa-bus]
-      [:h1 "Bussiaikataului niit tarttevil"]
-      [:p "Pist toho yläpualel vähä vinkkii ni mää kerron sit kaikke mitä mää ikinä sit vaa keksinki."]]])
+      [:h1 message]
+      [:p "Kirjottele toho vaa jottai järkevännäköst ni mää etti sul koska se oikke lähte."]]]))
 
 (defn application []
   (let [search-value (subscribe [:search-value])

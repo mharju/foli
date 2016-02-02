@@ -6,6 +6,9 @@ span.fa-search {
     top: 1.7em;
 }
 
+td {
+    width: 33%;
+}
 #results {
     position: absolute;
     top: 60px;

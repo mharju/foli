@@ -12,7 +12,7 @@
 
 (defn- format-response [response]
   (map (fn [item]
-     (let [estimated-time (t/to-default-time-zone (c/from-long (* 1000 (item "expectedarrivaltime"))))]
+     (let [estimated-time (t/to-default-time-zone (c/from-long (* 1000 (item "expecteddeparturetime"))))]
          {:display (item "destinationdisplay")
           :line (item "lineref")
           :estimated-time estimated-time})) (response "result")))
@@ -68,9 +68,10 @@
 
 (register-handler :search-stop
     (fn [app-state [_ stop-name]]
-      (if-not (nil? ((app-state :stop-ids) stop-name))
-          (dispatch [:set-selected-stop stop-name])
-          (dispatch [:search-stop-with-name stop-name]))
+      (let [stop-upper (when-not (nil? stop-name) (.toUpperCase stop-name))]
+        (if-not (nil? ((app-state :stop-ids) stop-upper))
+          (dispatch [:set-selected-stop stop-upper])
+          (dispatch [:search-stop-with-name stop-upper])))
       (assoc app-state :search-value stop-name)))
 
 (register-handler :search-stop-with-name
