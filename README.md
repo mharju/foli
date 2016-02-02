@@ -4,6 +4,6 @@ A timetable web-application for [Föli](http://data.foli.fi/) written in Clojure
 
 ## License
 
-Copyright © 2015 Mikko Harju
+Copyright © 2016 Taiste Oy
 
 Distributed under the Eclipse Public License either version 1.0 or (at your option) any later version.

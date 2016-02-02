@@ -1,4 +1,4 @@
-(defproject foli "0.1.0-SNAPSHOT"
+(defproject foli "0.5.0-SNAPSHOT"
   :description "Simple webapp on top of data.foli.fi"
   :url "http://foli.taiste.fi"
   :license {:name "Eclipse Public License"
