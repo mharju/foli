@@ -1,7 +1,10 @@
 (ns foli.handlers
   (:require
+    [cljs.reader]
     [ajax.core :as a]
+    [re-frame.middleware :as m]
     [clojure.string :refer [join lower-case]]
+    [clojure.set :as set]
     [cljs-time.core :as t]
     [cljs-time.coerce :as c]
     [cljs-time.format :as f]
@@ -84,4 +87,30 @@
                      (when (= (subs (lower-case v) 0 (count stop-name)) (lower-case stop-name))
                        {:name v :id k}))
                       (:stop-ids app-state)))))))
+
+(register-handler
+  :remove-favorite
+  (fn [app-state [_ stop-id]]
+    (dispatch [:store-favorites])
+    (update app-state :favorites set/difference #{stop-id})))
+
+(register-handler
+  :add-favorite
+  (fn [app-state [_ stop-id]]
+    (dispatch [:store-favorites])
+    (update app-state :favorites set/union #{stop-id})))
+
+(register-handler
+  :load-favorites
+  (fn [app-state _]
+    (if-let [favorites (.getItem js/localStorage "favorites")]
+      (assoc app-state :favorites (cljs.reader/read-string favorites))
+      app-state)))
+
+(register-handler
+  :store-favorites
+  (fn [app-state _]
+    (.setItem js/localStorage "favorites" (get app-state :favorites))
+    app-state))
+
 

@@ -40,7 +40,10 @@
           stop-ids (reaction (get @db :stop-ids))]
       (reaction {:schedule @schedule
          :stop-id @stop-id
-         :stop-name (get @stop-ids @stop-id)}))))
+         :stop-name (get @stop-ids @stop-id)
+         :favorite (contains? (get @db :favorites) @stop-id)}))))
+
+(register-sub :favorites (fn [db _] (reaction (get @db :favorites))))
 
 (defn schedule [data]
   (let [fmt (f/formatter "HH:mm")]
@@ -55,7 +58,11 @@
           :style {:height (str (- (.-clientHeight  (.-documentElement js/document)) 150) "px")}}
       (when-not (nil? (get @sched :stop-id))
         [:div
-          [:h4 {:style {:textAlign "center"}} (str (get @sched :stop-id) " - " (get @sched :stop-name))]
+          [:h4 {:style {:textAlign "center"}}
+               (if (get @sched :favorite)
+                 [:a {:href "#" :on-click (fn [e] (.preventDefault e) (dispatch [:remove-favorite (get @sched :stop-id)]))} [:span.fa.fa-star]]
+                 [:a {:href "#" :on-click (fn [e] (.preventDefault e) (dispatch [:add-favorite (get @sched :stop-id)]))} [:span.fa.fa-star-o]])
+               (str (get @sched :stop-id) " - " (get @sched :stop-name))]
           [:table.table
             [:thead
               [:tr
@@ -84,9 +91,11 @@
 (defn application []
   (let [search-value (subscribe [:search-value])
         selected-stop (subscribe [:selected-stop])
-        name-search-results (subscribe [:name-search-results])]
+        name-search-results (subscribe [:name-search-results])
+        favorites (subscribe [:favorites])]
     (fn []
       [:div.container
+          [:a.button.button-clear {:on-click #(dispatch [:search-stop ""]) :href "#" :style {:visibility (if (and (empty? @selected-stop) (empty? @search-value)) "hidden" "visible")}} [:span.fa.fa-long-arrow-left " "] " Etusivulle"]
           [:div.row.input-container
             [:div.column
               [:span.fa.fa-search]
@@ -96,7 +105,11 @@
                                     :value @search-value
                                     :onChange #(dispatch [:search-stop (.-value (.-target %))])}]]]
           (when (and (empty? @name-search-results) (empty? @selected-stop))
-            [intro])
+            [:div
+              [:div.row.favorites
+                (for [favorite @favorites]
+                  ^{:key favorite} [:a.button.button-outline {:href (str "#/stops/" favorite)} favorite])]
+            [intro]])
           (when-not (empty? @selected-stop) [stop-schedule])
           (when-not (nil? @name-search-results)
                [search-results])])))
@@ -114,6 +127,7 @@
         (goog.events/listen h EventType/NAVIGATE #(secretary/dispatch!  (.-token %)))
         (doto h (.setEnabled true)))
     (dispatch [:fetch-stops])
+    (dispatch [:load-favorites])
     (re/render-component
       [application]
       (.getElementById js/document "app"))
@@ -125,4 +139,6 @@
   ;; optionally touch your app-state to force rerendering depending on
   ;; your application
   ;; (swap! app-state update-in [:__figwheel_counter] inc)
-)
+  (re/render-component
+    [application]
+    (.getElementById js/document "app")))

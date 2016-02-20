@@ -18,7 +18,7 @@ td {
 }
 #results {
     position: absolute;
-    top: 70px;
+    top: 110px;
     left: 30px;
     padding-top: 0.5em;
 }
@@ -52,4 +52,26 @@ td {
         font-size: 1.4em;
         margin-right: 0.7em;
     }
+}
+
+.stop a {
+    margin-left: 1em;
+}
+.stop a .fa {
+    margin-right: 0.25em;
+}
+
+.favorites {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.favorites a {
+   margin: 0 1em;
+}
+
+a.button-clear {
+    padding: 0;
+    margin: 0;
 }
