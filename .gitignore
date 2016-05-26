@@ -14,3 +14,5 @@ pom.xml
 *.swp
 /resources/public/gtfs/
 .DS_Store
+*.sqlite3
+

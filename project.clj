@@ -11,7 +11,16 @@
                  [reagent "0.6.0-alpha"]
                  [re-frame "0.7.0-alpha"]
                  [com.andrewmcveigh/cljs-time "0.3.14"]
-                 [secretary "1.2.3"]]
+                 [secretary "1.2.3"]
+                 ;; Server
+                 [compojure "1.4.0"]
+                 [http-kit "2.1.19"]
+                 [com.stuartsierra/component "0.3.1"]
+                 [reloaded.repl "0.2.1"]
+                 [korma "0.4.2"]
+                 [org.xerial/sqlite-jdbc "3.7.15-M1"]]
+
+  :main foli.system
 
   :plugins [[lein-cljsbuild "1.1.2"]
             [lein-figwheel "0.5.0-6"]]
@@ -19,6 +28,10 @@
   :source-paths ["src"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
+
+  :profiles {:dev {:plugins []
+              :dependencies []
+              :source-paths ["dev"]}}
 
   :cljsbuild {:builds
               [{:id "dev"

@@ -78,6 +78,7 @@
       (assoc app-state :search-value stop-name)))
 
 (register-handler :search-stop-with-name
+    m/debug
     (fn [app-state [_ stop-name]]
       (-> app-state
           (dissoc :selected-stop)
