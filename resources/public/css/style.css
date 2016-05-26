@@ -33,6 +33,9 @@ td {
     width: 70px;
     font-weight: bold;
 }
+#results a span.lines {
+    margin-left: 0.5em;
+}
 
 #intro {
     text-align: center;
@@ -64,11 +67,12 @@ td {
 .favorites {
     display: flex;
     flex-direction: row;
+    flex-flow: row wrap;
     justify-content: center;
 }
 
 .favorites a {
-   margin: 0 1em;
+   margin: 0 1em 1em 0;
 }
 
 a.button-clear {
