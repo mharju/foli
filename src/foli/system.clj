@@ -1,46 +1,48 @@
 (ns foli.system
   (:require [org.httpkit.server :refer [run-server]]
             [com.stuartsierra.component :as component]
-            [korma.core :refer [defentity database fields table select modifier join where order sql-only]]
-            [korma.db :refer [sqlite3 defdb]]
-            [compojure.core :refer [defroutes GET]]))
+            [compojure.core :refer [defroutes GET]]
+            [clojure.java.jdbc :as j]
+            [clojure.data.json :as json]
+            [ring.middleware.params :refer [wrap-params]]))
 
-(defdb db (sqlite3 {:db "resources/public/foli.sqlite3"}))
+(def db {:subprotocol "sqlite" :subname "resources/public/foli.sqlite3"})
 
-(defentity trips (database db))
-(defentity stop-times (database db) (table :stop_times))
-(defentity routes (database db))
-(defentity stops (database db))
+(defn build-stop-route-index []
+  (let [routes-and-stops (j/query db ["select distinct s.stop_id, r.route_short_name
+                           from stops s
+                           left join stop_times st on st.stop_id = s.stop_id
+                           left join trips t on t.trip_id = st.trip_id
+                           left join routes r on r.route_id = t.route_id"])]
+    (for [route-and-stop routes-and-stops] (j/insert! db :routes_stops route-and-stop))))
 
-(defn find-stops-by-route [route-name stop-name]
-  (map :stop_id
-       (select
-         stop-times
-         (fields :stop_id)
-         (modifier "distinct")
-         (join trips (= :trips.trip_id :trip_id))
-         (join routes (= :routes.route_id :trips.route_id))
-         (join stops (= :stop_id :stops.stop_id))
-         (where (= :routes.route_short_name route-name))
-         (where (= :stops.stop_name stop-name))
-         (order :arrival_time))))
+(defn find-routes-by-stop-ids [stop-ids]
+    (let [result (j/query
+                   db
+                   (concat
+                     [(str "select stop_id, route_short_name
+                           from routes_stops
+                           where stop_id IN ("
+                                               (clojure.string/join ","
+                                                                    (map (fn [_] "?")
+                                                                         (range (count stop-ids))))
+                                               ")")] stop-ids))]
+      (->> result
+          (group-by :stop_id)
+          (map (fn [[k v]] [k (map :route_short_name v)]))
+          (into {}))))
 
-(defn index [req]
+(defn routes [stops]
   {:status 200
-  :headers { "Content-Type" "text/html; charset=utf-8" }
-  :body "<h1>Hei vaan</h1> <p>Tähän vois tulla <strong>Hauskaa</strong></p>"})
-
-(defn stops [route stop]
-  {:status 200
-    :headers { "Content-Type" "text/plain; charset=utf-8" }
-    :body (find-stops-by-route route stop)})
+    :headers { "Content-Type" "application/json; charset=utf-8" "Access-Control-Allow-Origin" "*" }
+    :body (json/write-str (find-routes-by-stop-ids (clojure.string/split stops #",")))})
 
 (defroutes app
-   (GET "/" [] index)
-   (GET "/stops/:route/:stop" [route stop] (stops route stop)))
+   (GET "/routes/" {:keys [query-params]}
+        (routes (get query-params "stops"))))
 
 (defn start-server [handler port]
-  (let [server (run-server app {:port port})]
+  (let [server (run-server (wrap-params app) {:port port})]
     (println (str "Up and running on port " port))
     server))
 
@@ -59,5 +61,9 @@
   (FoliSystem.))
 
 (defn -main [& args]
-  (.start (create-system)))
+  (if (= (second args) "build-index")
+    (do
+      (println "Building route and stop index. Please wait.")
+      (build-stop-route-index))
+    (.start (create-system))))
 

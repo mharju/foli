@@ -17,7 +17,7 @@
                  [http-kit "2.1.19"]
                  [com.stuartsierra/component "0.3.1"]
                  [reloaded.repl "0.2.1"]
-                 [korma "0.4.2"]
+                 [org.clojure/java.jdbc "0.6.1"]
                  [org.xerial/sqlite-jdbc "3.7.15-M1"]]
 
   :main foli.system

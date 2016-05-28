@@ -11,6 +11,7 @@
     [re-frame.core :refer [register-handler dispatch debug]]))
 
 (def foli-url "http://data.foli.fi/")
+(def server-url "http://localhost:9009/")
 (def cache-timeout (t/minutes 5))
 
 (defn- format-response [response]
@@ -80,18 +81,37 @@
 (register-handler :search-stop-with-name
     m/debug
     (fn [app-state [_ stop-name]]
-      (-> app-state
-          (dissoc :selected-stop)
-          (assoc :name-search-results
-                 (when (< 3 (count stop-name)) (keep
-                   (fn [[k v]]
-                     (when (= (subs (lower-case v) 0 (count stop-name)) (lower-case stop-name))
-                       {:name v
-                       :id k
-                       :lines (into #{}
-                                (map :line (get-in app-state [:stops k])))}))
+      (let [name-search-results (when (< 3 (count stop-name))
+                                  (keep
+                                    (fn [[k v]]
+                                      (when (= (subs (lower-case v) 0 (count stop-name)) (lower-case stop-name))
+                                        {:name v
+                                        :id k}))
+                                    (:stop-ids app-state)))]
+        (dispatch [:get-routes (map :id name-search-results)])
+        (-> app-state
+            (dissoc :selected-stop)
+            (assoc :name-search-results name-search-results)))))
 
-                      (:stop-ids app-state)))))))
+(register-handler :get-routes
+  (fn [app-state [_ stop-ids]]
+    (if (> (count stop-ids) 0)
+      (do
+        (when-not (nil? (:request app-state))
+          (.abort (:request app-state)))
+        (let [request (a/GET (str server-url "routes/?stops=" (join "," stop-ids))
+                             {:handler #(dispatch [:stop-routes %])
+                             :response-format :json})]
+          (assoc app-state :request request)))
+         app-state)))
+
+(register-handler :stop-routes
+  (fn [app-state [_ results]]
+    (-> app-state
+        (dissoc :request)
+        (update :name-search-results
+                (fn [current]
+                  (map #(assoc % :lines (get results (:id %))) current))))))
 
 (register-handler
   :remove-favorite
