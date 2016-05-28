@@ -11,7 +11,7 @@
     [re-frame.core :refer [register-handler dispatch debug]]))
 
 (def foli-url "http://data.foli.fi/")
-(def server-url "http://localhost:9009/")
+(def server-url "http://foli.taiste.fi:9009/")
 (def cache-timeout (t/minutes 5))
 
 (defn- format-response [response]
