@@ -2,7 +2,6 @@
   (:require
     [cljs.reader]
     [ajax.core :as a]
-    [re-frame.middleware :as m]
     [clojure.string :refer [join lower-case]]
     [clojure.set :as set]
     [cljs-time.core :as t]
@@ -10,8 +9,10 @@
     [cljs-time.format :as f]
     [re-frame.core :refer [register-handler dispatch debug]]))
 
+(def development false)
 (def foli-url "http://data.foli.fi/")
-(def server-url "http://foli.taiste.fi:9009/")
+(def server-url (if development "http://localhost:9009/" "http://foli.taiste.fi:9009/"))
+(def server-url "http://localhost:9009/")
 (def cache-timeout (t/minutes 5))
 
 (defn- format-response [response]
@@ -79,7 +80,6 @@
       (assoc app-state :search-value stop-name)))
 
 (register-handler :search-stop-with-name
-    m/debug
     (fn [app-state [_ stop-name]]
       (let [name-search-results (when (< 3 (count stop-name))
                                   (keep
@@ -111,7 +111,12 @@
         (dissoc :request)
         (update :name-search-results
                 (fn [current]
-                  (map #(assoc % :lines (get results (:id %))) current))))))
+                  (mapv #(assoc %
+                           :lines (map (fn [x] (get x "route_short_name")) (get results (:id %)))
+                           :stop-location
+                             (-> (get-in results [(:id %) 0])
+                                 (select-keys ["stop_lat" "stop_lon"])))
+                    current))))))
 
 (register-handler
   :remove-favorite
@@ -138,4 +143,20 @@
     (.setItem js/localStorage "favorites" (get app-state :favorites))
     app-state))
 
+(register-handler
+  :show-location
+  (fn [app-state [_ stop-id x y]]
+    (let [{:strs [stop_lat stop_lon]}
+          (->> app-state
+               (:name-search-results)
+               (filter #(= (:id %) stop-id))
+               (first)
+               (:stop-location))]
+      (assoc
+        app-state
+        :location {:lat stop_lat :long stop_lon :x x :y y}))))
 
+(register-handler
+  :hide-location
+  (fn [app-state _]
+    (dissoc app-state :location)))

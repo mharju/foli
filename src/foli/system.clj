@@ -2,6 +2,7 @@
   (:require [org.httpkit.server :refer [run-server]]
             [com.stuartsierra.component :as component]
             [compojure.core :refer [defroutes GET]]
+            [compojure.route :refer [resources]]
             [clojure.java.jdbc :as j]
             [clojure.data.json :as json]
             [ring.middleware.params :refer [wrap-params]]))
@@ -14,32 +15,36 @@
                            left join stop_times st on st.stop_id = s.stop_id
                            left join trips t on t.trip_id = st.trip_id
                            left join routes r on r.route_id = t.route_id"])]
-    (for [route-and-stop routes-and-stops] (j/insert! db :routes_stops route-and-stop))))
+    (j/delete! db :routes_stops nil)
+    (for [route-and-stop routes-and-stops]
+      (j/insert! db :routes_stops route-and-stop))))
 
 (defn find-routes-by-stop-ids [stop-ids]
-    (let [result (j/query
-                   db
-                   (concat
-                     [(str "select stop_id, route_short_name
-                           from routes_stops
-                           where stop_id IN ("
-                                               (clojure.string/join ","
-                                                                    (map (fn [_] "?")
-                                                                         (range (count stop-ids))))
-                                               ")")] stop-ids))]
-      (->> result
-          (group-by :stop_id)
-          (map (fn [[k v]] [k (map :route_short_name v)]))
-          (into {}))))
+  (let [result (j/query
+                 db
+                 (concat
+                   [(str "select r.stop_id, r.route_short_name, s.stop_lat, s.stop_lon
+                           from routes_stops r
+                           left join stops s on r.stop_id = s.stop_id
+                           where r.stop_id IN ("
+                         (clojure.string/join ","
+                                              (map (fn [_] "?")
+                                                   (range (count stop-ids))))
+                         ")")] stop-ids))]
+    (->> result
+         (group-by :stop_id)
+         (map (fn [[k v]] [k (map #(select-keys % [:route_short_name :stop_lat :stop_lon]) v)]))
+         (into {}))))
 
 (defn routes [stops]
-  {:status 200
-    :headers { "Content-Type" "application/json; charset=utf-8" "Access-Control-Allow-Origin" "*" }
-    :body (json/write-str (find-routes-by-stop-ids (clojure.string/split stops #",")))})
+  {:status  200
+   :headers {"Content-Type" "application/json; charset=utf-8" "Access-Control-Allow-Origin" "*"}
+   :body    (json/write-str (find-routes-by-stop-ids (clojure.string/split stops #",")))})
 
 (defroutes app
-   (GET "/routes/" {:keys [query-params]}
-        (routes (get query-params "stops"))))
+  (GET "/routes/" {:keys [query-params]}
+   (routes (get query-params "stops")))
+  (resources "/"))
 
 (defn start-server [handler port]
   (let [server (run-server (wrap-params app) {:port port})]

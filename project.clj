@@ -4,21 +4,23 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.7.170"]
-                 [org.clojure/core.async "0.2.374"]
-                 [cljs-ajax "0.5.3"]
-                 [reagent "0.6.0-alpha"]
-                 [re-frame "0.7.0-alpha"]
-                 [com.andrewmcveigh/cljs-time "0.3.14"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/clojurescript "1.9.293"]
+                 [org.clojure/core.async "0.2.395"]
+                 [cljs-ajax "0.5.8"]
+                 [reagent "0.6.0"]
+                 [re-frame "0.8.0"]
+                 [com.andrewmcveigh/cljs-time "0.4.0"]
                  [secretary "1.2.3"]
                  ;; Server
-                 [compojure "1.4.0"]
-                 [http-kit "2.1.19"]
+                 [compojure "1.5.1"]
+                 [http-kit "2.2.0"]
                  [com.stuartsierra/component "0.3.1"]
-                 [reloaded.repl "0.2.1"]
+                 [reloaded.repl "0.2.3"]
                  [org.clojure/java.jdbc "0.6.1"]
-                 [org.xerial/sqlite-jdbc "3.7.15-M1"]]
+                 [org.xerial/sqlite-jdbc "3.15.1"]
+                 [figwheel-sidecar "0.5.8"]
+                 [binaryage/devtools "0.8.3"]]
 
   :main foli.system
 
@@ -29,9 +31,9 @@
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
-  :profiles {:dev {:plugins []
+  :profiles {:dev {:plugins []}
               :dependencies []
-              :source-paths ["dev"]}}
+              :source-paths ["dev"]}
 
   :cljsbuild {:builds
               [{:id "dev"
@@ -40,6 +42,7 @@
                 :figwheel {:on-jsload "foli.core/on-js-reload"}
 
                 :compiler {:main foli.core
+                           :preloads [devtools.preload]
                            :asset-path "js/compiled/out"
                            :output-to "resources/public/js/compiled/foli.js"
                            :output-dir "resources/public/js/compiled/out"
@@ -58,7 +61,7 @@
              ;; :server-port 3449 ;; default
              ;; :server-ip "127.0.0.1"
 
-             :css-dirs ["resources/public/css"] ;; watch and update CSS
+             :css-dirs ["resources/public/css"]}) ;; watch and update CSS
 
              ;; Start an nREPL server into the running figwheel process
              ;; :nrepl-port 7888
@@ -83,4 +86,4 @@
 
              ;; to configure a different figwheel logfile path
              ;; :server-logfile "tmp/logs/figwheel-logfile.log"
-             })
+
