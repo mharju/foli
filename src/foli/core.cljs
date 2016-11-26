@@ -103,7 +103,8 @@
     [:div.column
       [:span.fa.fa-bus]
       [:h1 message]
-      [:p "Kirjottele toho vaa jottai järkevännäköst ni mää etti sul koska se oikke lähte."]]]))
+      [:p "Kirjottele toho vaa jottai järkevännäköst ni mää etti sul koska se oikke lähte."]
+      [:p.disclaimer "Me muute käytetää tiatolähteenä " [:a {:href "http://data.foli.fi"} "Fölin julkista dataa."]]]]))
 
 (defn stop-location []
   (let [show-location (subscribe [:location])]
