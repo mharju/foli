@@ -9,10 +9,9 @@
     [cljs-time.format :as f]
     [re-frame.core :refer [register-handler dispatch debug]]))
 
-(def development false)
+(def development true)
 (def foli-url "http://data.foli.fi/")
 (def server-url (if development "http://localhost:9009/" "http://foli.taiste.fi:9009/"))
-(def server-url "http://localhost:9009/")
 (def cache-timeout (t/minutes 5))
 
 (defn- format-response [response]
