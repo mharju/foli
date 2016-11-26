@@ -31,9 +31,11 @@
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
-  :profiles {:dev {:plugins []}
-              :dependencies []
-              :source-paths ["dev"]}
+  :profiles {:dev {:plugins      []
+                   :dependencies [[com.cemerick/piggieback "0.2.1"]
+                                  [org.clojure/tools.nrepl "0.2.10"]]
+                                  :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
+                                  :source-paths ["dev"]}}
 
   :cljsbuild {:builds
               [{:id "dev"
