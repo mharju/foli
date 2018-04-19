@@ -4,4 +4,4 @@
             [figwheel-sidecar.repl-api :as fw]))
 
 (reloaded.repl/set-init! #'system/create-system)
-(fw/start-figwheel!)
+#_(fw/start-figwheel!)

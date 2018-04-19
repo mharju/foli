@@ -104,7 +104,7 @@
       [:span.fa.fa-bus]
       [:h1 message]
       [:p "Kirjottele toho vaa jottai järkevännäköst ni mää etti sul koska se oikke lähte."]
-      [:p.disclaimer "Me muute käytetää tiatolähteenä " [:a {:href "http://data.foli.fi"} "Fölin julkista dataa."]]]]))
+      [:p.disclaimer "Me muute käytetää tiatolähteenä " [:a {:href "//data.foli.fi"} "Fölin julkista dataa."]]]]))
 
 (defn stop-location []
   (let [show-location (subscribe [:location])]
@@ -116,7 +116,7 @@
          [:span.fa.fa-heart]
          [:div.map-container
           [:img
-           {:src (str "http://staticmap.openstreetmap.de/staticmap.php?zoom=15&size=200x200&maptype=mapnik&"
+           {:src (str "//staticmap.openstreetmap.de/staticmap.php?zoom=15&size=200x200&maptype=mapnik&"
                           "center=" lat "," long "&")}]]]))))
 
 (defn application []
